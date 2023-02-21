@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: workflows-dev
+  name: codeflare-test-39
+spec:
+  # Do not change this - Ray currently only supports one head node per cluster.
+  replicas: 1
+  selector:
+    matchLabels:
+      component: codeflare-test-39
+      type: python
+  template:
+    metadata:
+      labels:
+        component: codeflare-test-39
+        type: python
+    spec:
+      serviceAccountName: codeflare-kfp-svcaccount
+      securityContext:
+        fsGroup: 1000660000
+        runAsUser: 1000660000
+      restartPolicy: Always
+      containers:
+        - name: codeflare-test-39
+          image: us.icr.io/cil15-shared-registry/preprocessing-pipelines/kfp/kfp-codeflare:0
+          imagePullPolicy: Always
+          command: ["/bin/bash","-c"]
+          args: ["python /HAP/test.py && while true; do sleep 30; done;"]
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 1Gi
+      imagePullSecrets:
+      - name: all-icr-io
+

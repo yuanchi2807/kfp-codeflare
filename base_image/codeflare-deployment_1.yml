@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: workflows-dev
+  name: hap-nidd-head-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: hap-nidd-head-node
+      type: ray
+  template:
+    metadata:
+      labels:
+        component: hap-nidd-head-node
+        type: ray
+    spec:
+      securityContext:
+        fsGroup: 1000660000
+        runAsUser: 1000660000
+
+      restartPolicy: Always
+
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      containers:
+        - name: hap-nidd-head-node
+          # MIKE: replace the base image with your Dockerfile_gpu but DO NOT include HAP models in the image
+          image: docker.io/rayproject/ray:latest-py310-gpu
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash"]
+          args:
+            ["-c", "ray start --head --dashboard-host=$MY_POD_IP --node-ip-address=$MY_POD_IP --port=6379 --redis-shard-ports=6380,6381 --num-cpus=$MY_CPU_REQUEST --block "]
+          ports:
+            - containerPort: 6379 # Redis port.
+            - containerPort: 6380 # Redis port.
+            - containerPort: 6381 # Redis port.
+            - containerPort: 12345 # Ray internal communication.
+            - containerPort: 12346 # Ray internal communication.
+            - containerPort: 8265 # Ray dashboard
+            - containerPort: 8888 # Jupyter notebook
+
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+          env:
+            - name: MY_CPU_REQUEST
+              valueFrom:
+                resourceFieldRef:
+                  resource: requests.cpu
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          resources:
+            requests:
+              cpu: 4
+              memory: 8Gi
+            limits:
+              cpu: 4
+              memory: 16Gi
+      imagePullSecrets:
+      - name: all-icr-io
