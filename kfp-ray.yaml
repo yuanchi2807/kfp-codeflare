@@ -1,0 +1,51 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: test-kfp-deploy-ray-cluster
+  annotations:
+    tekton.dev/output_artifacts: '{}'
+    tekton.dev/input_artifacts: '{}'
+    tekton.dev/artifact_bucket: mlpipeline
+    tekton.dev/artifact_endpoint: minio-service.kubeflow:9000
+    tekton.dev/artifact_endpoint_scheme: http://
+    tekton.dev/artifact_items: '{"deploy-ray-cluster": []}'
+    sidecar.istio.io/inject: "false"
+    tekton.dev/template: ''
+    pipelines.kubeflow.org/big_data_passing_format: $(workspaces.$TASK_NAME.path)/artifacts/$ORIG_PR_NAME/$TASKRUN_NAME/$TASK_PARAM_NAME
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "Testing how to use KFP
+      pipeline to deploy a Ray cluster.", "name": "test_KFP_deploy_ray_cluster"}'
+  labels:
+    pipelines.kubeflow.org/pipelinename: ''
+    pipelines.kubeflow.org/generation: ''
+spec:
+  pipelineSpec:
+    tasks:
+    - name: deploy-ray-cluster
+      taskSpec:
+        steps:
+        - name: main
+          command:
+          - sh
+          - -ec
+          - |
+            program_path=$(mktemp)
+            printf "%s" "$0" > "$program_path"
+            python3 -u "$program_path" "$@"
+          - |
+            def deploy_ray_cluster():
+                print("lauching a Ray cluster when this KFP operator is deployed")
+                from test import launch_ray
+                launch_ray()
+
+            import argparse
+            _parser = argparse.ArgumentParser(prog='Deploy ray cluster', description='')
+            _parsed_args = vars(_parser.parse_args())
+
+            _outputs = deploy_ray_cluster(**_parsed_args)
+          image: http://us.icr.io/cil15-shared-registry/preprocessing-pipelines/kfp/kfp-codeflare:0
+        metadata:
+          labels:
+            pipelines.kubeflow.org/cache_enabled: "true"
+          annotations:
+            pipelines.kubeflow.org/component_spec_digest: '{"name": "Deploy ray cluster",
+              "outputs": [], "version": "Deploy ray cluster@sha256=58258f3412245f063943589b42374457c8dacf41a16ceaeaf36de668a1d0ecb7"}'
