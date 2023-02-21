@@ -23,7 +23,7 @@ def deploy_ray_cluster():
 
 deploy_ray_cluster_op = components.create_component_from_func(
     deploy_ray_cluster,
-    base_image='http://us.icr.io/cil15-shared-registry/preprocessing-pipelines/kfp/kfp-codeflare:0')
+    base_image='us.icr.io/cil15-shared-registry/preprocessing-pipelines/kfp/kfp-codeflare:0')
 
 @dsl.pipeline(
     name='test_KFP_deploy_ray_cluster',
