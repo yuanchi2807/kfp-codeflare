@@ -34,6 +34,6 @@ spec:
             limits:
               cpu: 1
               memory: 1Gi
-      imagePullSecrets:
-      - name: all-icr-io
+      #imagePullSecrets:
+      #- name: all-icr-io
 
